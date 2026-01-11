@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Organizer</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Toastify -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-panel {
+            background-color: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(55, 65, 81, 0.5);
+        }
+        
+        .glass-btn {
+            background-color: rgba(37, 99, 235, 0.8);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+        
+        .glass-btn:hover {
+            background-color: rgba(37, 99, 235, 1);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="glass-panel sticky top-0 z-50 border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('main.dashboard') }}" class="text-xl font-bold text-blue-400">MediaOrganizer</a>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="{{ url_for('main.dashboard') }}" class="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                            <a href="{{ url_for('main.media_view', media_type='movie') }}" class="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">Movies</a>
+                            <a href="{{ url_for('main.media_view', media_type='series') }}" class="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">Series</a>
+                            <a href="{{ url_for('main.settings_page') }}" class="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">Settings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div id="flash-messages" class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="glass-panel p-4 mb-2 rounded-lg border-l-4 {% if category == 'success' %}border-green-500 text-green-200{% else %}border-blue-500 text-blue-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="glass-panel mt-auto py-6">
+        <div class="text-center text-gray-500 text-sm">
+            &copy; 2024 Media Organizer. Powered by Gemini AI.
+        </div>
+    </footer>
+
+    <script>
+        // Simple Toastify wrapper
+        function showToast(msg, type='info') {
+            Toastify({
+                text: msg,
+                duration: 3000,
+                gravity: "top", 
+                position: "right", 
+                style: {
+                    background: type === 'error' ? "#ef4444" : "#2563eb",
+                }
+            }).showToast();
+        }
+    </script>
+</body>
+</html>

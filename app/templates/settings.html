@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold text-white mb-8">Settings</h1>
+
+    <form method="POST" class="space-y-8">
+        <!-- Radarr Section -->
+        <div class="glass-panel p-6 rounded-xl">
+            <h2 class="text-xl font-bold text-blue-400 mb-4">Radarr Configuration</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Radarr URL</label>
+                    <input type="text" name="radarr_url" value="{{ settings.radarr_url or '' }}" placeholder="http://192.168.1.10:7878" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">API Key</label>
+                    <input type="text" name="radarr_api_key" value="{{ settings.radarr_api_key or '' }}" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sonarr Section -->
+        <div class="glass-panel p-6 rounded-xl">
+            <h2 class="text-xl font-bold text-blue-400 mb-4">Sonarr Configuration</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Sonarr URL</label>
+                    <input type="text" name="sonarr_url" value="{{ settings.sonarr_url or '' }}" placeholder="http://192.168.1.10:8989" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">API Key</label>
+                    <input type="text" name="sonarr_api_key" value="{{ settings.sonarr_api_key or '' }}" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Section -->
+        <div class="glass-panel p-6 rounded-xl">
+            <h2 class="text-xl font-bold text-purple-400 mb-4">Gemini AI Configuration</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Google Gemini API Key</label>
+                    <input type="password" name="gemini_api_key" value="{{ settings.gemini_api_key or '' }}" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Model Name</label>
+                    <input type="text" name="gemini_model" value="{{ settings.gemini_model or 'gemini-1.5-flash' }}" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-4">
+            <button type="button" onclick="testConnection()" class="text-gray-400 hover:text-white font-medium px-4 py-2 transition">
+                Test Connections
+            </button>
+            <button type="submit" class="glass-btn text-white px-8 py-3 rounded-lg font-bold shadow-lg">
+                Save Settings
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    async function testConnection() {
+        try {
+            const response = await fetch("{{ url_for('main.test_connection') }}", { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.radarr) showToast("Radarr: Connected", "success");
+            else showToast("Radarr: Connection Failed", "error");
+            
+            if (data.sonarr) setTimeout(() => showToast("Sonarr: Connected", "success"), 500);
+            else setTimeout(() => showToast("Sonarr: Connection Failed", "error"), 500);
+            
+        } catch (e) {
+            showToast("Error testing connections", "error");
+        }
+    }
+</script>
+{% endblock %}

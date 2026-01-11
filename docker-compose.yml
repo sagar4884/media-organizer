@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: media-organizer-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=manage.py
+      - FLASK_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      # Create a volume for the SQLite DB so it persists
+      - DATABASE_URL=sqlite:////data/media_organizer.db
+    volumes:
+      - ./data:/data
+    depends_on:
+      - redis
+
+  worker:
+    build: .
+    container_name: media-organizer-worker
+    restart: unless-stopped
+    command: ["rq", "worker", "default", "--url", "redis://redis:6379/0"]
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:////data/media_organizer.db
+    volumes:
+      - ./data:/data
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: media-organizer-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
