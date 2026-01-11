@@ -217,6 +217,22 @@ def analyze_quick(media_type):
     flash(f'Queued quick analysis for {count} new items.', 'info')
     return redirect(url_for('main.media_view', media_type=media_type))
 
+@main.route('/analyze-selected', methods=['POST'])
+def analyze_selected():
+    item_ids = request.form.getlist('item_ids')
+    
+    if not item_ids:
+        flash('No items selected.', 'warning')
+        return redirect(request.referrer or url_for('main.dashboard'))
+    
+    count = 0
+    for item_id in item_ids:
+        current_app.task_queue.enqueue(analyze_item_task, int(item_id))
+        count += 1
+    
+    flash(f'Queued analysis for {count} selected items.', 'info')
+    return redirect(request.referrer)
+
 @main.route('/action/ignore/<int:item_id>', methods=['POST'])
 def ignore_item(item_id):
     item = MediaItem.query.get_or_404(item_id)
