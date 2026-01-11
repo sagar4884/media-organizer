@@ -1,12 +1,17 @@
-import google.generativeai as genai
+from google import genai
 import os
 
 class AIService:
-    def __init__(self, api_key, model_name='gemini-1.5-flash'):
+    def __init__(self, api_key, model_name='gemini-2.0-flash-exp'):
         self.api_key = api_key
-        self.model_name = model_name
+        # Use 'gemini-2.0-flash-exp' as default if not specified, or fallback to what user provides
+        # The new SDK might use different model identifiers, but 'gemini-2.0-flash-exp' is a safe bet for newer usage.
+        # If the user has 'gemini-1.5-flash' in settings, it might still fail if not supported by the new SDK/endpoint context.
+        # Let's try to stick to what the user provides, but default to a known working one if empty.
+        self.model_name = model_name if model_name else 'gemini-2.0-flash-exp'
+        
         if self.api_key:
-            genai.configure(api_key=self.api_key)
+            self.client = genai.Client(api_key=self.api_key)
 
     def analyze_media_location(self, title, tmdb_id, overview, root_folders):
         if not self.api_key:
@@ -39,12 +44,14 @@ class AIService:
         """
 
         try:
-            model = genai.GenerativeModel(self.model_name)
-            response = model.generate_content(prompt)
+            # New SDK usage
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             suggested_path = response.text.strip()
             
             # Simple validation: ensure the returned string is actually one of the options (or close to it)
-            # Ideally, we check strict equality, but LLMs sometimes add whitespace.
             for folder in root_folders:
                 if folder.strip() == suggested_path:
                     return folder
