@@ -13,7 +13,7 @@ class Settings(db.Model):
     
     # Gemini
     gemini_api_key = db.Column(db.String(255), nullable=True)
-    gemini_model = db.Column(db.String(100), default='gemini-1.5-flash')
+    gemini_model = db.Column(db.String(100), default='gemini-2.0-flash-exp')
 
 class MediaItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
