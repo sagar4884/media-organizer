@@ -24,15 +24,6 @@ def sync_library_task(app_type):
     Background task to fetch items from Radarr/Sonarr and update DB.
     app_type: 'radarr' or 'sonarr'
     """
-    # Note: We need to recreate app context inside worker if not using flask-rq2 or similar context wrapper
-    # But for simplicity here, assuming simple worker setup.
-    # In a real production RQ worker, we'd wrap this execution with app.app_context().
-    # Since I'm writing the worker command in docker-compose as "rq worker", 
-    # we need to ensure the worker script initializes the app context.
-    # HOWEVER, a better approach for this snippet is to just define logic here, 
-    # and assume the caller or worker handles context. 
-    # To be safe, I'll use a local import create_app to act as a script.
-    
     from app import create_app
     app = create_app()
     
@@ -211,3 +202,8 @@ def rescan_item(item_id):
     current_app.task_queue.enqueue(analyze_item_task, item_id)
     return '<span class="text-blue-400">Queued...</span>', 200
 
+@main.route('/status/queue')
+def queue_status():
+    """Returns the number of jobs in the queue."""
+    count = len(current_app.task_queue)
+    return jsonify({'count': count})
