@@ -5,9 +5,6 @@ class AIService:
     def __init__(self, api_key, model_name='gemini-2.0-flash-exp'):
         self.api_key = api_key
         # Use 'gemini-2.0-flash-exp' as default if not specified, or fallback to what user provides
-        # The new SDK might use different model identifiers, but 'gemini-2.0-flash-exp' is a safe bet for newer usage.
-        # If the user has 'gemini-1.5-flash' in settings, it might still fail if not supported by the new SDK/endpoint context.
-        # Let's try to stick to what the user provides, but default to a known working one if empty.
         self.model_name = model_name if model_name else 'gemini-2.0-flash-exp'
         
         if self.api_key:
@@ -37,10 +34,19 @@ class AIService:
         Based on the metadata (especially genre/theme implied by overview) and the folder names, 
         which root folder does this item belong in? 
         
-        Constraints:
+        Specific Rules for 'Anime' vs 'Anime (R or MA)':
+        1. If a folder named "Anime (R or MA)" exists:
+           - Place content here IF it contains mature themes such as: excessive violence, gore, nudity, sexual content, strong drug use, or excessive strong language (e.g. Rick and Morty, Berserk, Goblin Slayer, Attack on Titan, South Park, Family Guy).
+           - This applies to Western Animation (Cartoons) as well if they are mature (e.g., Archer, Rick and Morty).
+        2. If a folder named "Anime" exists:
+           - Place content here if it is animated (Japanese Anime, Donghua, or Western Cartoons) BUT is generally suitable for teenagers or general audiences (e.g., Naruto, One Piece, Avatar: The Last Airbender).
+        3. If a folder named "English" exists:
+           - Only put Live Action content here. Do NOT put animated content in "English" if an "Anime" folder exists.
+        
+        General Constraints:
         - Return ONLY the exact folder path string from the list above.
         - Do not add explanations or quotes.
-        - If unsure, pick the best logical match.
+        - If unsure, pick the best logical match based on the rules above.
         """
 
         try:
