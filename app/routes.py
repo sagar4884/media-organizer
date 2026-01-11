@@ -4,6 +4,7 @@ from app.models import Settings, MediaItem
 from app.services.radarr_sonarr_client import RadarrClient, SonarrClient
 from app.services.ai_service import AIService
 from flask import current_app
+from rq.job import Job
 
 main = Blueprint('main', __name__)
 
@@ -167,9 +168,23 @@ def test_connection():
 def media_view(media_type):
     if media_type not in ['movie', 'series']:
         return redirect(url_for('main.dashboard'))
+    
+    # Sorting Logic
+    sort_by = request.args.get('sort', 'title')
+    order = request.args.get('order', 'asc')
+    
+    query = MediaItem.query.filter_by(type=media_type, is_organized=False, ignored=False)
+    
+    if sort_by == 'title':
+        query = query.order_by(MediaItem.title.asc() if order == 'asc' else MediaItem.title.desc())
+    elif sort_by == 'path':
+        query = query.order_by(MediaItem.current_path.asc() if order == 'asc' else MediaItem.current_path.desc())
+    elif sort_by == 'suggested':
+        query = query.order_by(MediaItem.suggested_path.asc() if order == 'asc' else MediaItem.suggested_path.desc())
         
-    items = MediaItem.query.filter_by(type=media_type, is_organized=False, ignored=False).all()
-    return render_template('media_list.html', items=items, media_type=media_type)
+    items = query.all()
+    
+    return render_template('media_list.html', items=items, media_type=media_type, sort_by=sort_by, order=order)
 
 @main.route('/sync/<media_type>', methods=['POST'])
 def sync_media(media_type):
@@ -190,6 +205,18 @@ def analyze_all(media_type):
     flash(f'Queued analysis for {count} items.', 'info')
     return redirect(url_for('main.media_view', media_type=media_type))
 
+@main.route('/analyze-quick/<media_type>', methods=['POST'])
+def analyze_quick(media_type):
+    # Only analyze items that don't have a suggested path yet
+    items = MediaItem.query.filter_by(type=media_type, is_organized=False, ignored=False).filter(MediaItem.suggested_path == None).all()
+    count = 0
+    for item in items:
+        current_app.task_queue.enqueue(analyze_item_task, item.id)
+        count += 1
+    
+    flash(f'Queued quick analysis for {count} new items.', 'info')
+    return redirect(url_for('main.media_view', media_type=media_type))
+
 @main.route('/action/ignore/<int:item_id>', methods=['POST'])
 def ignore_item(item_id):
     item = MediaItem.query.get_or_404(item_id)
@@ -207,3 +234,10 @@ def queue_status():
     """Returns the number of jobs in the queue."""
     count = len(current_app.task_queue)
     return jsonify({'count': count})
+
+@main.route('/status/stop', methods=['POST'])
+def stop_queue():
+    """Empties the queue."""
+    current_app.task_queue.empty()
+    flash('Queue cleared!', 'warning')
+    return redirect(request.referrer or url_for('main.dashboard'))
